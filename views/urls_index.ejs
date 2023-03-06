@@ -1,0 +1,6 @@
+<h1>URLs</h1>
+<ul>
+  <% for(let shortURL in urls) {%>
+    <li><%= shortURL %> -> <%= urls[shortURL].longURL %></li>
+  <% } %>
+</ul>
