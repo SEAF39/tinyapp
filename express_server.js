@@ -22,6 +22,8 @@ app.post("/urls", (req, res) => {
   res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
 
+function generateRandomString() {}
+
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
