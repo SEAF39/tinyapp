@@ -22,15 +22,16 @@ app.post("/urls", (req, res) => {
   res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
 
-function generateRandomString() {
-  const length = 6;
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+function generateRandomString() {}
+
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id];
+  if (longURL) {
+    res.redirect(longURL);
+  } else {
+    res.status(404).send("Short URL not found");
   }
-  return result;
-}
+});
 
 
 app.get("/urls", (req, res) => {
