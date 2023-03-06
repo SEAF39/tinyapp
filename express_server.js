@@ -1,11 +1,19 @@
+// Import the Express module
 const express = require("express");
-const app = express();
-const PORT = 8080; // default port 8080
 
+// Create an instance of the Express application
+const app = express();
+
+// Set the default port to 8080
+const PORT = 8080;
+
+// Set the view engine to EJS
 app.set("view engine", "ejs");
 
+// Enable parsing of URL-encoded data
 app.use(express.urlencoded({ extended: true }));
 
+// The URL database that maps short URLs to long URLs
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
@@ -22,12 +30,12 @@ function generateRandomString() {
   return result;
 }
 
-// Display the new URL form
+// Display the form to create a new short URL
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-// Create a new short URL
+// Create a new short URL and add it to the URL database
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
@@ -35,8 +43,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-
-// Redirect to the long URL
+// Redirect to the long URL corresponding to a short URL
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   if (longURL) {
@@ -46,27 +53,28 @@ app.get("/u/:shortURL", (req, res) => {
   }
 });
 
-// Display a list of all the URLs
+// Display a list of all the URLs in the URL database
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
-// Display a specific URL
+// Display a specific URL and its corresponding short URL
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL].longURL;
+  const longURL = urlDatabase[shortURL];
   const templateVars = { shortURL, longURL, id: shortURL };
   res.render("urls_show", templateVars);
 });
 
-// Delete a URL
+// Delete a URL from the URL database
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   res.redirect("/urls");
 });
 
+// Start listening for incoming HTTP requests on the specified port
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
