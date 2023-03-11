@@ -63,8 +63,15 @@ app.get("/urls", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL];
-  const templateVars = { shortURL, longURL, id: shortURL };
+  const templateVars = { shortURL, longURL, id: shortURL, url: { shortURL, longURL } };
   res.render("urls_show", templateVars);
+});
+
+// Update a long URL in the URL database
+app.post("/urls/:id", (req, res) => {
+  const id = req.params.id;
+  urlDatabase[id] = req.body.longURL;
+  res.redirect("/urls");
 });
 
 // Delete a URL from the URL database
