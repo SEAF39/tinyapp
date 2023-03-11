@@ -42,16 +42,15 @@
       </nav>
     </header>
     <main style="margin: 1em;">
-      <h3>Editing <%= url.shortURL %></h3>
-      <form method="POST" action="/urls/<%= url.shortURL %>">
+      <h3>Short URL: <%= shortURL %></h3>
+      <p>Long URL: <%= longURL %></p>
+      <form method="POST" action="/urls/<%= shortURL %>">
         <div class="form-group">
-          <label for="longURL">Long URL:</label>
-          <input type="text" class="form-control" id="longURL" name="longURL" value="<%= url.longURL %>">
+          <label for="longURL">Edit Long URL:</label>
+          <input type="text" class="form-control" id="longURL" name="longURL" value="<%= longURL %>">
         </div>
-        <button type="submit" class="btn btn-primary">Update</button>
+        <button type="submit" class="btn btn-primary">Save</button>
       </form>
-      <br>
-      <a href="/urls/<%= url.shortURL %>" class="btn btn-secondary">Cancel</a>
     </main>
     <!-- Bootstrap JS -->
     <script
