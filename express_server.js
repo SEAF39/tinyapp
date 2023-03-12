@@ -1,10 +1,8 @@
+// express_server.js
+
 // Import the Express module
 const express = require("express");
-
-// Create an instance of the Express application
 const app = express();
-
-// Set the default port to 8080
 const PORT = 8080;
 
 // Set the view engine to EJS
@@ -42,8 +40,6 @@ app.post("/urls", (req, res) => {
   urlDatabase[shortURL] = longURL;
   res.redirect(`/urls/${shortURL}`);
 });
-
-
 
 // Redirect to the long URL corresponding to a short URL
 app.get("/u/:shortURL", (req, res) => {
