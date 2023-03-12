@@ -1,5 +1,4 @@
 // express_server.js
-
 // Import the Express module
 const express = require("express");
 const app = express();
@@ -10,6 +9,10 @@ app.set("view engine", "ejs");
 
 // Enable parsing of URL-encoded data
 app.use(express.urlencoded({ extended: true }));
+
+// enable body parsing middleware for POST requests
+const bodyParser = require('body-parser');
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // The URL database that maps short URLs to long URLs
 const urlDatabase = {
@@ -65,6 +68,13 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+// Delete a URL from the URL database
+app.post("/urls/:shortURL/delete", (req, res) => {
+  const shortURL = req.params.shortURL;
+  delete urlDatabase[shortURL];
+  res.redirect("/urls");
+});
+
 // Update a long URL in the URL database
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
@@ -72,11 +82,11 @@ app.post("/urls/:id", (req, res) => {
   res.redirect("/urls");
 });
 
-// Delete a URL from the URL database
-app.post("/urls/:shortURL/delete", (req, res) => {
-  const shortURL = req.params.shortURL;
-  delete urlDatabase[shortURL];
-  res.redirect("/urls");
+// POST route for /login
+app.post('/login', (req, res) => {
+  const { username } = req.body;
+  res.cookie('username', username);
+  res.redirect('/urls');
 });
 
 // Start listening for incoming HTTP requests on the specified port
