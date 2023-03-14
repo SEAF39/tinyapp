@@ -1,30 +1,24 @@
 <!--_header.ejs -->
-
 <header>
   <nav class="navbar navbar-expand-md navbar-dark bg-success" style="font-family: Arial, sans-serif; font-size: 16px;">
-  <a class="navbar-brand font-weight-bold" href="/urls">TinyApp</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup"aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
+    <a class="navbar-brand font-weight-bold" href="/urls">TinyApp</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <a class="nav-item nav-link" href="/register">Register</a>
-          </div>
+        <% if (!username) { %>
+          <a class="nav-item nav-link" href="/register">Register</a>
+          <a class="nav-item nav-link" href="/login">Login</a>
+        <% } else { %>
+          <form class="form-inline" method="POST" action="/logout">
+            <span style="font-family: Arial, sans-serif; font-weight: bold; font-size: 25px;">Logged in as: <%= username %></span>
+            <button class="btn btn-primary" type="submit" style="font-size: 18px; margin-left: 10px;">Logout</button>
+          </form>
+        <% } %>
       </div>
     </div>
- <% if (username) { %>
-   <h5 style="margin: 0.5em; font-family: Arial, sans-serif; font-weight: bold; font-size: 25px;">Logged in as: </h5>
-   <span style="font-family: Arial, sans-serif; font-weight: bold; font-size: 25px;"><%= username %></span>
-   <button class="btn btn-primary" type="button" onclick="window.location.href='/logout'" style="font-size: 18px;"> Logout</button>   
-<% } else {  %>
-   <form class="form-inline" method="POST" action="/login">
-      <input class="form-control mr-sm-2" type="text" placeholder="Username" name="username" aria-label="Username">
-      <button class="btn btn-outline-light my-2 my-sm-0" type="submit" style="font-size: 18px; font-family: Arial, sans-serif; padding-left: 20px;">Login</button>  
-   </form>
-<% } %>
   </nav>
 </header>
-
-
