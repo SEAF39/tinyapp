@@ -121,24 +121,51 @@ app.post("/urls/:id", (req, res) => {
 //Route handler for GET request to path "/urls and Create an object to hold variables to be used in the template
 app.get('/urls', (req, res) => {
   const templateVars = {
-    username: req.cookies['username'],
+    username: users[req.cookies.username] ? users[req.cookies.username].email : undefined,
     urls: urlDatabase
   };
   console.log(templateVars);
   res.render('urls_index', templateVars);
 });
 
-// Route handler for POST request to path "/login"
+
+// Route handler for post to path "/login"
 app.post("/login", (req, res) => {
-  const { username } = req.body;
-  console.log(`User ${username} logged in`);
-  res.cookie("username", username);
-  res.redirect("urls");
+  console.log(req.cookies)
+  if (req.body.email.length === 0) {
+    return res.status(400).send('Please enter your email and password');
+  }
+  if (req.body.password.length === 0) {
+    return res.status(400).send('The Password is wrong');
+  }
+  const user = getUserByEmail(req.body.email, users);
+  if (user === undefined) {
+    return res.status(403).send('Email does not exist');
+  }
+  if (user) {
+    console.log(user)
+    if (!bcrypt.compareSync(req.body.password, user.password)) {
+      return res.status(403).send('The password incorrect');
+    }
+    res.cookie('username',user.id);
+    return res.redirect("/urls");
+  }
+});
+
+
+// Route handler for GET request to path "/login"
+app.get('/login', (req, res) => {
+  const templateVars = {
+    username: req.cookies['username'],
+    urls: urlDatabase
+  };
+  console.log(templateVars);
+  res.render('urls_login', templateVars);
 });
 
 
 // Route handler for GET request to path "/logout"
-app.get("/logout", (req, res) => {
+app.post("/logout", (req, res) => {
   res.clearCookie("username");
   res.redirect("/urls");
   console.log("LogOut Clearing username cookie:", req.cookies.username);
