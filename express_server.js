@@ -2,12 +2,14 @@
 
 // Import the Express module
 const express = require("express");
-const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080;
 
+/*Add the cookie-parser middleware to the Express application
+cookie-parser is a third-party middleware that adds cookie parsing functionality to Express
+*/
+const cookieParser = require('cookie-parser');
 app.use(cookieParser());
-
 
 // Set the view engine to EJS
 app.set("view engine", "ejs");
@@ -60,12 +62,6 @@ app.get("/u/:shortURL", (req, res) => {
   }
 });
 
-/* // Display a list of all the URLs in the URL database
-app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
-  res.render("urls_index", templateVars);
-}); */
-
 // Display a specific URL and its corresponding short URL
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
@@ -74,11 +70,6 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-/* app.get('/urls/:shortURL', (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: users[req.session.user_id].email };
-  res.render('urls_show', templateVars);
-});
- */
 // Delete a URL from the URL database
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
@@ -93,6 +84,7 @@ app.post("/urls/:id", (req, res) => {
   res.redirect("/urls");
 });
 
+//Route handler for GET request to path "/urls and Create an object to hold variables to be used in the template
 app.get('/urls', (req, res) => {
   const templateVars = {
     username: req.cookies['username'],
@@ -100,21 +92,20 @@ app.get('/urls', (req, res) => {
   };
   console.log(templateVars);
   res.render('urls_index', templateVars);
-  
 });
 
-// POST route for /login
+// Route handler for POST request to path "/login"
 app.post("/login", (req, res) => {
   const { username } = req.body;
   res.cookie("username", username);
   res.redirect("urls");
 });
 
+// Route handler for GET request to path "/logout"
 app.get("/logout", (req, res) => {
   res.clearCookie("username");
   res.redirect("/urls");
 });
-
 
 
 // Start listening for incoming HTTP requests on the specified port
