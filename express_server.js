@@ -4,6 +4,7 @@
 const express = require("express");
 const app = express();
 const PORT = 8080;
+const bcrypt = require('bcrypt');
 
 /*Add the cookie-parser middleware to the Express application
 cookie-parser is a third-party middleware that adds cookie parsing functionality to Express
@@ -11,21 +12,26 @@ cookie-parser is a third-party middleware that adds cookie parsing functionality
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
 
+
 // Set the view engine to EJS
 app.set("view engine", "ejs");
+
 
 // Enable parsing of URL-encoded data
 app.use(express.urlencoded({ extended: true }));
 
+
 // enable body parsing middleware for POST requests
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true }));
+
 
 // The URL database that maps short URLs to long URLs
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
 };
+
 
 // Create a global object called users to store and access the users in the app
 const users = {
@@ -49,54 +55,68 @@ function generateRandomString() {
   for (let i = 0; i < 6; i++) {
     result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
+  console.log(`Generated random string: ${result}`);
   return result;
 }
 
+
 // Display the form to create a new short URL
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new",{username : null});
-  
+  console.log("Rendering the urls_new template");
+  res.render("urls_new", { username: null });
 });
+
 
 // Create a new short URL and add it to the URL database
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
   urlDatabase[shortURL] = longURL;
+  console.log(`Added URL ${longURL} with short URL ${shortURL}`);
   res.redirect('/urls');
 });
+
 
 // Redirect to the long URL corresponding to a short URL
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   if (longURL) {
+    console.log(`Redirecting to long URL: ${longURL}`);
     res.redirect(longURL);
   } else {
+    console.log(`Short URL not found: ${req.params.shortURL}`);
     res.status(404).send("Short URL not found");
   }
 });
+
 
 // Display a specific URL and its corresponding short URL
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL];
   const templateVars = { shortURL, longURL, id: shortURL, url: { shortURL, longURL }, username : null };
+  console.log(`Showing URL details for short URL: ${shortURL}`);
   res.render("urls_show", templateVars);
 });
+
 
 // Delete a URL from the URL database
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
+  console.log(`Deleting URL with short URL: ${shortURL}`);
   delete urlDatabase[shortURL];
   res.redirect("/urls");
 });
+
 
 // Update a long URL in the URL database
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
   urlDatabase[id] = req.body.longURL;
+  console.log(`URL ${id} updated to ${urlDatabase[id]}`);
   res.redirect("/urls");
 });
+
 
 //Route handler for GET request to path "/urls and Create an object to hold variables to be used in the template
 app.get('/urls', (req, res) => {
@@ -111,15 +131,19 @@ app.get('/urls', (req, res) => {
 // Route handler for POST request to path "/login"
 app.post("/login", (req, res) => {
   const { username } = req.body;
+  console.log(`User ${username} logged in`);
   res.cookie("username", username);
   res.redirect("urls");
 });
+
 
 // Route handler for GET request to path "/logout"
 app.get("/logout", (req, res) => {
   res.clearCookie("username");
   res.redirect("/urls");
+  console.log("LogOut Clearing username cookie:", req.cookies.username);
 });
+
 
 // Handle GET requests to the /register endpoint
 app.get('/register', (req, res) => {
@@ -131,17 +155,49 @@ app.get('/register', (req, res) => {
   res.render('urls_register', templateVars);
 });
 
-// Handle POST requests to the /register endpoint
+// This route handles user registration
 app.post('/register', (req, res) => {
   const { email, password } = req.body;
-  const id = generateRandomString();
-  const newUser = { id, email, password };
-  users[id] = newUser;
-  console.log(users); // log the users object to inspect its contents
-  res.cookie('user_id', id);
-  res.redirect('/urls');
+  console.log(`Attempting to register user with email: ${email}`);
+  if (!email || !password) {
+    console.log(`Registration failed: email and password are required`);
+    return res.status(400).send('The Email and password are required');
+  }
+  if (getUserByEmail(email)) {
+    console.log(`Registration failed: email ${email} already exists`);
+    return res.status(400).send('This Email already exists');
+  }
+
+
+  // Hash the password and generate a user ID
+  const hashedPassword = bcrypt.hashSync(password, 10);
+  const userId = generateRandomString();
+  
+
+  // Add the new user to the database
+  users[userId] = {
+    id: userId,
+    email: email,
+    password: hashedPassword
+  };
+  console.log(`New user registered: ${email}`);
+  res.status(201).send(`User registered successfully: ${email}`);
 });
 
+
+// Helper function to lookup a user by email
+function getUserByEmail(email) {
+  for (let userId in users) {
+    const user = users[userId];
+    console.log(`Checking user with email ${user.email}`);
+    if (user.email === email) {
+      console.log(`Found user with email ${email}`);
+      return user;
+    }
+  }
+  console.log(`User with email ${email} not found`);
+  return null;
+}
 
 
 // Start listening for incoming HTTP requests on the specified port
