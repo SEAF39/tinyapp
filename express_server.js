@@ -197,8 +197,6 @@ app.post("/logout", (req, res) => {
 });
 
 
-
-
 // Handle GET requests to the /register endpoint
 app.get('/register', (req, res) => {
   const templateVars = {
