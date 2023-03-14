@@ -130,7 +130,7 @@ app.get('/urls', (req, res) => {
 
 
 // Route handler for post to path "/login"
-app.post("/login", (req, res) => {
+/* app.post("/login", (req, res) => {
   console.log(req.cookies)
   if (req.body.email.length === 0) {
     return res.status(400).send('Please enter your email and password');
@@ -150,7 +150,32 @@ app.post("/login", (req, res) => {
     res.cookie('username',user.id);
     return res.redirect("/urls");
   }
+}); */
+
+app.post("/login", (req, res) => {
+  console.log(req.cookies)
+  if (req.body.email.length === 0) {
+    return res.status(400).send('Please enter your email and password');
+  }
+  const email = req.body.email;
+  const password = req.body.password;
+  const user = getUserByEmail(email);
+
+  if (!user) {
+    console.log(user)
+    res.status(403).send("No user with that email found.");
+  } else if (!bcrypt.compareSync(password, user.password)) {
+    res.status(403).send("Incorrect password.");
+  } else {
+    res.cookie('username',user.id);
+    res.redirect("/urls");
+  }
 });
+
+
+
+
+
 
 
 // Route handler for GET request to path "/login"
@@ -167,9 +192,11 @@ app.get('/login', (req, res) => {
 // Route handler for GET request to path "/logout"
 app.post("/logout", (req, res) => {
   res.clearCookie("username");
-  res.redirect("/urls");
+  res.redirect("/login");
   console.log("LogOut Clearing username cookie:", req.cookies.username);
 });
+
+
 
 
 // Handle GET requests to the /register endpoint
