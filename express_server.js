@@ -107,6 +107,16 @@ app.get("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
+// Handle GET requests to the /register endpoint
+app.get('/register', (req, res) => {
+  const templateVars = {
+    username: req.cookies['username'],
+    urls: urlDatabase
+  };
+  console.log(templateVars);
+  res.render('urls_register', templateVars);
+});
+  
 
 // Start listening for incoming HTTP requests on the specified port
 app.listen(PORT, () => {
