@@ -27,6 +27,20 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
+// Create a global object called users to store and access the users in the app
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
 // Helper function to generate a random string
 function generateRandomString() {
   let result = "";
@@ -116,7 +130,19 @@ app.get('/register', (req, res) => {
   console.log(templateVars);
   res.render('urls_register', templateVars);
 });
-  
+
+// Handle POST requests to the /register endpoint
+app.post('/register', (req, res) => {
+  const { email, password } = req.body;
+  const id = generateRandomString();
+  const newUser = { id, email, password };
+  users[id] = newUser;
+  console.log(users); // log the users object to inspect its contents
+  res.cookie('user_id', id);
+  res.redirect('/urls');
+});
+
+
 
 // Start listening for incoming HTTP requests on the specified port
 app.listen(PORT, () => {
