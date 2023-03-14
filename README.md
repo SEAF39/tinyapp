@@ -7,11 +7,13 @@ This project utilizes specific technologies such as:
 - Middleware: Express
 - Template Engine: EJS
 
+
 ## Dependencies:
 
 - Node.js
 - Express
 - EJS
+- Cookie-Session
 
 ## Getting Started:
 
