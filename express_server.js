@@ -1,8 +1,13 @@
 // express_server.js
+
 // Import the Express module
 const express = require("express");
+const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080;
+
+app.use(cookieParser());
+
 
 // Set the view engine to EJS
 app.set("view engine", "ejs");
@@ -33,7 +38,8 @@ function generateRandomString() {
 
 // Display the form to create a new short URL
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  res.render("urls_new",{username : null});
+  
 });
 
 // Create a new short URL and add it to the URL database
@@ -41,7 +47,7 @@ app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
   urlDatabase[shortURL] = longURL;
-  res.redirect(`/urls/${shortURL}`);
+  res.redirect('/urls');
 });
 
 // Redirect to the long URL corresponding to a short URL
@@ -54,20 +60,25 @@ app.get("/u/:shortURL", (req, res) => {
   }
 });
 
-// Display a list of all the URLs in the URL database
+/* // Display a list of all the URLs in the URL database
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
-});
+}); */
 
 // Display a specific URL and its corresponding short URL
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL];
-  const templateVars = { shortURL, longURL, id: shortURL, url: { shortURL, longURL } };
+  const templateVars = { shortURL, longURL, id: shortURL, url: { shortURL, longURL }, username : null };
   res.render("urls_show", templateVars);
 });
 
+/* app.get('/urls/:shortURL', (req, res) => {
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: users[req.session.user_id].email };
+  res.render('urls_show', templateVars);
+});
+ */
 // Delete a URL from the URL database
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
@@ -82,12 +93,29 @@ app.post("/urls/:id", (req, res) => {
   res.redirect("/urls");
 });
 
-// POST route for /login
-app.post('/login', (req, res) => {
-  const { username } = req.body;
-  res.cookie('username', username);
-  res.redirect('/urls');
+app.get('/urls', (req, res) => {
+  const templateVars = {
+    username: req.cookies['username'],
+    urls: urlDatabase
+  };
+  console.log(templateVars);
+  res.render('urls_index', templateVars);
+  
 });
+
+// POST route for /login
+app.post("/login", (req, res) => {
+  const { username } = req.body;
+  res.cookie("username", username);
+  res.redirect("urls");
+});
+
+app.get("/logout", (req, res) => {
+  res.clearCookie("username");
+  res.redirect("/urls");
+});
+
+
 
 // Start listening for incoming HTTP requests on the specified port
 app.listen(PORT, () => {
