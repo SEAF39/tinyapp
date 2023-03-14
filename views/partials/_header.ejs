@@ -10,6 +10,10 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
+        
+            <a class="nav-item nav-link" href="/register">Register</a>
+           
+          </div>
       </div>
     </div>
  <% if (username) { %>
@@ -20,7 +24,10 @@
    <form class="form-inline" method="POST" action="/login">
       <input class="form-control mr-sm-2" type="text" placeholder="Username" name="username" aria-label="Username">
       <button class="btn btn-outline-light my-2 my-sm-0" type="submit" style="font-size: 18px; font-family: Arial, sans-serif; padding-left: 20px;">Login</button>
+      
    </form>
 <% } %>
   </nav>
 </header>
+
+
