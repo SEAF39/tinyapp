@@ -5,20 +5,28 @@
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-      <div class="navbar-nav">
-        <a class="nav-item nav-link" href="/urls">My URLs</a>
-        <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <% if (!username) { %>
-          <a class="nav-item nav-link" href="/register">Register</a>
-          <a class="nav-item nav-link" href="/login">Login</a>
-        <% } else { %>
-          <form class="form-inline" method="POST" action="/logout">
-            <span style="font-family: Arial, sans-serif; font-weight: bold; font-size: 25px;">Logged in as: <%= username %></span>
-            <button class="btn btn-primary" type="submit" style="font-size: 18px; margin-left: 10px;">Logout</button>
-          </form>
-        <% } %>
-      </div>
+
+
+  <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+  <div class="navbar-nav ml-left">
+    <a class="nav-item nav-link" href="/urls">My URLs</a>
+    <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
+  </div>
+</div>
+    <% if (!user_id) { %>
+      <div class="navbar-nav ml-right">
+      <a class="nav-item nav-link" href="/register">Register</a>
+      <a class="nav-item nav-link" href="/login">Login</a>
+    </div>
+    <% } else { %>
+      <form class="form-inline" method="POST" action="/logout">
+        <span style="font-family: Arial, sans-serif; font-weight: bold; font-size: 25px;">Logged in as: <%= user_id %></span>
+        <button class="btn btn-primary ml-2" type="submit" style="font-size: 18px;">Logout</button>
+      </form>
+    <% } %>
+  </div>
+</div>
+
     </div>
   </nav>
 </header>
