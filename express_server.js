@@ -63,7 +63,8 @@ function generateRandomString() {
 // Display the form to create a new short URL
 app.get("/urls/new", (req, res) => {
   console.log("Rendering the urls_new template");
-  res.render("urls_new", { username: null });
+  res.render("urls_new", { user_id: null });
+  return res.redirect('/login');
 });
 
 
@@ -94,7 +95,7 @@ app.get("/u/:shortURL", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL];
-  const templateVars = { shortURL, longURL, id: shortURL, url: { shortURL, longURL }, username : null };
+  const templateVars = { shortURL, longURL, id: shortURL, url: { shortURL, longURL }, user_id : null };
   console.log(`Showing URL details for short URL: ${shortURL}`);
   res.render("urls_show", templateVars);
 });
@@ -121,36 +122,12 @@ app.post("/urls/:id", (req, res) => {
 //Route handler for GET request to path "/urls and Create an object to hold variables to be used in the template
 app.get('/urls', (req, res) => {
   const templateVars = {
-    username: users[req.cookies.username] ? users[req.cookies.username].email : undefined,
+    user_id: users[req.cookies.user_id] ? users[req.cookies.user_id].email : undefined,
     urls: urlDatabase
   };
   console.log(templateVars);
   res.render('urls_index', templateVars);
 });
-
-
-// Route handler for post to path "/login"
-/* app.post("/login", (req, res) => {
-  console.log(req.cookies)
-  if (req.body.email.length === 0) {
-    return res.status(400).send('Please enter your email and password');
-  }
-  if (req.body.password.length === 0) {
-    return res.status(400).send('The Password is wrong');
-  }
-  const user = getUserByEmail(req.body.email, users);
-  if (user === undefined) {
-    return res.status(403).send('Email does not exist');
-  }
-  if (user) {
-    console.log(user)
-    if (!bcrypt.compareSync(req.body.password, user.password)) {
-      return res.status(403).send('The password incorrect');
-    }
-    res.cookie('username',user.id);
-    return res.redirect("/urls");
-  }
-}); */
 
 app.post("/login", (req, res) => {
   console.log(req.cookies)
@@ -167,7 +144,7 @@ app.post("/login", (req, res) => {
   } else if (!bcrypt.compareSync(password, user.password)) {
     res.status(403).send("Incorrect password.");
   } else {
-    res.cookie('username',user.id);
+    res.cookie('user_id',user.id);
     res.redirect("/urls");
   }
 });
@@ -181,7 +158,7 @@ app.post("/login", (req, res) => {
 // Route handler for GET request to path "/login"
 app.get('/login', (req, res) => {
   const templateVars = {
-    username: req.cookies['username'],
+    user_id: req.cookies['user_id'],
     urls: urlDatabase
   };
   console.log(templateVars);
@@ -191,16 +168,16 @@ app.get('/login', (req, res) => {
 
 // Route handler for GET request to path "/logout"
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/login");
-  console.log("LogOut Clearing username cookie:", req.cookies.username);
+  console.log("LogOut Clearing user_id cookie:", req.cookies.user_id);
 });
 
 
 // Handle GET requests to the /register endpoint
 app.get('/register', (req, res) => {
   const templateVars = {
-    username: req.cookies['username'],
+    user_id: req.cookies['user_id'],
     urls: urlDatabase
   };
   console.log(templateVars);
