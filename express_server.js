@@ -63,8 +63,12 @@ function generateRandomString() {
 // Display the form to create a new short URL
 app.get("/urls/new", (req, res) => {
   console.log("Rendering the urls_new template");
-  res.render("urls_new", { user_id: null });
-  return res.redirect('/login');
+  const templateVars = {
+    user_id: users[req.cookies.user_id] ? users[req.cookies.user_id].email : undefined,
+  };
+  console.log("Template variables:", templateVars);
+  res.render("urls_new",templateVars);
+  return res.redirect('/urls');
 });
 
 
@@ -148,11 +152,6 @@ app.post("/login", (req, res) => {
     res.redirect("/urls");
   }
 });
-
-
-
-
-
 
 
 // Route handler for GET request to path "/login"
