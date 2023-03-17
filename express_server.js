@@ -133,6 +133,7 @@ app.get('/urls', (req, res) => {
   res.render('urls_index', templateVars);
 });
 
+// This route handles the login POST request.
 app.post("/login", (req, res) => {
   console.log(req.cookies)
   if (req.body.email.length === 0) {
@@ -183,6 +184,7 @@ app.get('/register', (req, res) => {
   res.render('urls_register', templateVars);
 });
 
+
 // This route handles user registration
 app.post('/register', (req, res) => {
   const { email, password } = req.body;
@@ -195,13 +197,13 @@ app.post('/register', (req, res) => {
     console.log(`Registration failed: email ${email} already exists`);
     return res.status(400).send('This Email already exists');
   }
-
+  // Code to create a new user and save to database goes here
+  res.redirect('/login');
 
   // Hash the password and generate a user ID
   const hashedPassword = bcrypt.hashSync(password, 10);
   const userId = generateRandomString();
   
-
   // Add the new user to the database
   users[userId] = {
     id: userId,
