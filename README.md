@@ -14,12 +14,18 @@ This project utilizes specific technologies such as:
 - Express
 - EJS
 - Cookie-Session
+- Cookie-session
+- Bcrypt
+- Bcryptjs
+- Bootstrap
 
 ## Getting Started:
 
-- Install all dependencies using the ```npm install``` in your terminal.
-- Run the web server using the ```npm start``` in your terminal.
-- Use the nagivation bar to:
-  - Create new shorten URLs.
-  - Access list of URLs.
-- Utilize Edit and Delete buttons to update your URLs
+Install all dependencies using the npm install command.
+Run the web server using the npm start command.
+To register, go to: http://localhost:8080/register.
+To log in, go to: http://localhost:8080/login.
+Use the nagivation bar to:
+Create new shorten URLs
+Access list of URLs (must be logged in first)
+Utilize Edit and Delete buttons to update your URLs in My URLs
