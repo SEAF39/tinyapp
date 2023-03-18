@@ -7,9 +7,10 @@ const PORT = 8080;
 
 
 // This code imports the assert library from the chai package and the getUserByEmail function from the ../helpers module.
-const { assert } = require('chai');
-const { getUserByEmail } = require('../helpers');
 
+/* const { assert } = require('chai');
+const { getUserByEmail } = require('../helpers');
+ */
 
 /*
 Import the cookie-session middleware
