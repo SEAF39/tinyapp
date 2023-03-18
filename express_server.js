@@ -339,26 +339,30 @@ app.post("/urls/:id/delete", (req, res) => {
 
 
 // 10 -This route handles the login POST request form submission.
-app.post("/login", (req, res) => {
-  console.log(req.cookies);
-  if (req.body.email.length === 0) {
-    return res.status(400).send('Please enter your email and password');
-  }
-  const email = req.body.email;
-  const password = req.body.password;
+app.post('/login', (req, res) => {
+  const { email, password } = req.body;
+  console.log(`Attempting to login user with email: ${email}`);
+
+  // Check if the user exists in the database
   const user = getUserByEmail(email);
-
   if (!user) {
-    console.log(user);
-    res.status(403).send("No user with that email found.");
-  } else if (!bcrypt.compareSync(password, user.password)) {
-    res.status(403).send("Incorrect password.");
-  } else {
-    res.cookie('user_id',user.id);
-    res.redirect("/urls");
+    console.log(`Login failed: email ${email} not found`);
+    return res.status(403).send('No user with that email found.');
   }
-});
 
+  // Check if the password is correct
+  if (!bcrypt.compareSync(password, user.password)) {
+    console.log(`Login failed: incorrect password`);
+    return res.status(403).send('Incorrect password.');
+  }
+
+  // Set the user_id cookie and redirect to the URLs page
+  res.cookie('user_id', user.id);
+  res.redirect('/urls');
+
+  // Log a success message
+  console.log(`User ${email} successfully logged in`);
+});
 
 
 
@@ -387,7 +391,6 @@ app.post("/logout", (req, res) => {
   res.redirect("/login");
   console.log("LogOut Clearing user_id cookie:", req.cookies.user_id);
 });
-
 
 
 /*Route handler for the "/register" endpoint, which is used to render the registration page.The route handler retrieves the user ID from the cookies and passes it to the templateVars object, along with the urlDatabase object.
@@ -427,16 +430,17 @@ app.post('/register', (req, res) => {
   // Save the new user data to the database
   users[userId] = {
     id: userId,
+    name: name,
     email: email,
     password: hashedPassword
   };
 
+  // Redirect the user to the login page
+  res.redirect('/login');
+
   // Log a success message and send a response to the client
   console.log(`New user registered: ${email}`);
   res.status(201).send(`User registered successfully: ${email}`);
-
-  // Redirect the user to the login page
-  res.redirect('/login');
 });
 
 
