@@ -67,7 +67,7 @@ function generateRandomString() {
 
 
 
-// 1- Display the list of short URLs for the logged-in user
+// 1- // Route to display a list of URLs for a user
 app.get("/urls", (req, res) => {
   const user_id = req.cookies.user_id;
   const user = users[user_id];
@@ -105,19 +105,27 @@ app.get("/urls", (req, res) => {
 
 
 
-
-// 2- Handle creating a new short URL
+// 2- Route to create a new URL in the urlDatabase
 app.post("/urls", (req, res) => {
+  // Get the user ID from the cookie
   const user_id = req.cookies.user_id;
+  // Find the user object in the users database using the user ID
   const user = users[user_id];
-  
+
   // Check if the user is not logged in
   if (!user) {
+    console.log("User is not logged in");
+    // Return a 401 Unauthorized response with an error message
     return res.status(401).send("You need to be logged in to create a new URL");
   }
   
+  // Generate a random short URL using the generateRandomString function
   const shortURL = generateRandomString();
+  console.log("Generated short URL:", shortURL);
+  
+  // Get the long URL from the request body
   const longURL = req.body.longURL;
+  console.log("Long URL:", longURL);
   
   // Add the new URL to the urlDatabase with the user's ID
   urlDatabase[shortURL] = { longURL: longURL, userID: user_id };
@@ -127,13 +135,17 @@ app.post("/urls", (req, res) => {
 });
 
 
-// 3- Display the form to create a new short URL
+// 3-  Route to display the form for creating a new URL
 app.get("/urls/new", (req, res) => {
+  // Get the user ID from the cookie
   const user_id = req.cookies.user_id;
+  // Find the user object in the users database using the user ID
   const user = users[user_id];
-  
+
   // Check if the user is not logged in
   if (!user) {
+    console.log("User is not logged in");
+    // Return a 401 Unauthorized response with an error message
     return res.status(401).send("You need to be logged in to view this page");
   }
   
@@ -141,71 +153,79 @@ app.get("/urls/new", (req, res) => {
   const templateVars = {
     user_id: user.email
   };
+  console.log("Rendered urls_new template with variables:", templateVars);
   res.render("urls_new", templateVars);
 });
 
 
-
-
-// 4- GET /u/:id route
+// 4- Route to redirect to the long URL corresponding to a given short URL ID
 app.get("/u/:id", (req, res) => {
-  if (!urlDatabase[req.params.id]) { // If ID is not found in the database
+  // Check if the short URL ID exists in the urlDatabase
+  if (!urlDatabase[req.params.id]) {
+    console.log(`Short URL ${req.params.id} not found in database`); // Log an error message to the console
     return res.status(404).send("The requested URL was not found."); // Return a 404 status code and error message
   }
-  const longURL = urlDatabase[req.params.id].longURL; // Get the long URL from the database using the short URL ID
-  res.redirect(longURL); // Redirect to the long URL
+
+  // Get the long URL from the database using the short URL ID
+  const longURL = urlDatabase[req.params.id].longURL;
+  console.log(`Redirecting ${req.params.id} to ${longURL}`); // Log the redirection information to the console
+  // Redirect to the long URL
+  res.redirect(longURL);
 });
+
 
 
 // 5- Handle GET requests to the /urls/:id endpoint
 app.get("/urls/:id", (req, res) => {
-  // Extract the short URL parameter from the request
   const shortURL = req.params.id;
-
-  // Look up the corresponding long URL from the urlDatabase using the short URL
+  console.log("shortURL:", shortURL);
+  
   const longURL = urlDatabase[shortURL].longURL;
+  console.log("longURL:", longURL);
+  
   const templateVars = {
-    id: shortURL,
-    longURL
+  id: shortURL,
+  longURL
   }
-
-
-  // Redirect the user to the long URL
+  
   res.render("urls_show", templateVars);
-});
+  });
 
 
-// 6- Update a long URL in the URL database
+/*
+ This route handler displays the details of a specific URL to the user, only if they are logged in and the URL belongs to them. It first checks if the user is logged in, then checks if the URL exists in the database and if it belongs to the user. If all checks pass, it renders the "urls_show" template with the URL data. It also logs helpful messages for debugging purposes.
+ */
 app.get("/urls/:id", (req, res) => {
   const user_id = req.cookies.user_id;
   const user = users[user_id];
   
-  // Check if the user is not logged in
   if (!user) {
+    console.log("User not logged in");
     return res.status(401).send("You need to be logged in to view this page");
   }
   
-  // Check if the URL belongs to the user
   const url = urlDatabase[req.params.id];
   if (!url) {
+    console.log("URL not found in database");
     return res.status(404).send("This URL does not exist");
   }
   if (url.userID !== user_id) {
+    console.log("User does not have permission to access this URL");
     return res.status(403).send("You do not have permission to access this URL");
   }
   
-  // Render the template with the URL data
   const templateVars = {
     user_id: user.email,
     shortURL: req.params.id,
     longURL: url.longURL
   };
+  console.log("URL data:", templateVars);
   res.render("urls_show", templateVars);
 });
 
 
 
-// 7 - Edit a URL
+// 7 - This Route handles the POST request to edit a URL in the urlDatabase.
 app.post("/urls/:id/edit", (req, res) => {
   const userID = req.cookies.user_id;
   const urlID = req.params.id;
@@ -214,24 +234,29 @@ app.post("/urls/:id/edit", (req, res) => {
 
   // check if the user is logged in
   if (!userID) {
+    console.log("User not logged in");
     return res.status(401).send("Please login to edit URLs.");
   }
 
   // check if the URL exists
   if (!url) {
+    console.log("URL not found");
     return res.status(404).send("URL not found.");
   }
 
   // check if the user owns the URL
   if (url.userID !== userID) {
+    console.log("User does not have permission to edit this URL");
     return res.status(403).send("You do not have permission to edit this URL.");
   }
 
   // update the longURL for the URL with the given ID
   urlDatabase[urlID].longURL = newLongURL;
+  console.log("URL updated successfully");
 
   res.redirect("/urls");
 });
+
 
 
 // 8- Display a specific URL and its corresponding short URL
@@ -240,20 +265,21 @@ app.get("/urls/:shortURL", (req, res) => {
   const user = users[user_id];
   const shortURL = req.params.shortURL;
 
-
-
   // Check if the short URL exists
   if (!urlDatabase[shortURL]) {
+    console.log(`Short URL ${shortURL} not found`);
     return res.status(404).send("Short URL not found");
   }
   
   // Check if the user is not logged in
   if (!user) {
+    console.log("User not logged in");
     return res.status(401).send("You need to be logged in to view this page");
   }
   
   // Check if the short URL belongs to the logged-in user
   if (urlDatabase[shortURL].userID !== user_id) {
+    console.log("User does not have permission to access this URL");
     return res.status(403).send("You don't have permission to access this URL");
   }
   
@@ -267,7 +293,9 @@ app.get("/urls/:shortURL", (req, res) => {
 
 
 
-// 9- Delete a URL from the URL database
+/*
+9- This code defines an Express route handler function that deletes a URL from a database if the user is logged in and owns the URL. It also includes error handling to check if the URL exists and if the user is authorized to delete it.
+ */
 app.post("/urls/:id/delete", (req, res) => {
   const user_id = req.cookies.user_id;
   const url = urlDatabase[req.params.id];
@@ -289,6 +317,8 @@ app.post("/urls/:id/delete", (req, res) => {
 
   // Delete the URL from the database
   delete urlDatabase[req.params.id];
+  console.log("Deleting URL with ID:", req.params.id);
+
 
   // Redirect to /urls
   res.redirect("/urls");
@@ -296,9 +326,9 @@ app.post("/urls/:id/delete", (req, res) => {
 
 
 
-// 10 -This route handles the login POST request.
+// 10 -This route handles the login POST request form submission.
 app.post("/login", (req, res) => {
-  console.log(req.cookies)
+  console.log(req.cookies);
   if (req.body.email.length === 0) {
     return res.status(400).send('Please enter your email and password');
   }
@@ -307,7 +337,7 @@ app.post("/login", (req, res) => {
   const user = getUserByEmail(email);
 
   if (!user) {
-    console.log(user)
+    console.log(user);
     res.status(403).send("No user with that email found.");
   } else if (!bcrypt.compareSync(password, user.password)) {
     res.status(403).send("Incorrect password.");
@@ -318,21 +348,28 @@ app.post("/login", (req, res) => {
 });
 
 
-// 11 - Route handler for GET request to path "/login"
+
+
+/* 11 - Route handler for GET request to path "/login"
+Render the login page if the user is not logged in
+Otherwise, redirect to the URLs page */
 app.get('/login', (req, res) => {
-  console.log('Cookies:', req.cookies); // Debugging line
+  console.log('Cookies:', req.cookies);
   const user_id = req.cookies.user_id;
   if (user_id) {
-    console.log(`User ID ${user_id} found in cookies`); // Debugging line
+    console.log(`User ID ${user_id} found in cookies`);
     res.redirect("/urls");
   } else {
-    console.log('User ID not found in cookies'); // Debugging line
+    console.log('User ID not found in cookies');
     res.render('urls_login', {user_id: user_id});
   }
 });
 
 
-// 12- Route handler for GET request to path "/logout"
+/*
+12- Route handler for GET request to path "/logout"
+This route handles the POST request to /logout It clears the user_id cookie and redirects to /login
+*/
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
   res.redirect("/login");
@@ -340,7 +377,10 @@ app.post("/logout", (req, res) => {
 });
 
 
-// 13- Handle GET requests to the /register endpoint
+
+/*Route handler for the "/register" endpoint, which is used to render the registration page.The route handler retrieves the user ID from the cookies and passes it to the templateVars object, along with the urlDatabase object.
+It then renders the "urls_register" template and sends it back to the client.
+ */
 app.get('/register', (req, res) => {
   const templateVars = {
     user_id: req.cookies['user_id'],
@@ -351,7 +391,7 @@ app.get('/register', (req, res) => {
 });
 
 
-// 14- This route handles user registration
+// 14- Route for handling user registration
 app.post('/register', (req, res) => {
   const { email, password } = req.body;
   console.log(`Attempting to register user with email: ${email}`);
