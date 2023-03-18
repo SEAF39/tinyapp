@@ -66,106 +66,237 @@ function generateRandomString() {
 }
 
 
-// GET /urls route
+
+// 1- Display the list of short URLs for the logged-in user
 app.get("/urls", (req, res) => {
-  if (!req.cookies.user_id) { // If user is not logged in, redirect to the login page
-    return res.redirect("/login");
+  const user_id = req.cookies.user_id;
+  const user = users[user_id];
+
+  console.log('user_id:', user_id);
+  console.log('user:', user);
+
+  // Check if the user is not logged in
+  if (!user) {
+    console.log('User is not logged in');
+    return res.status(401).send("You need to be logged in to view this page");
   }
-  const user = users[req.cookies.user_id];
-  if (!user) { // If user is not found in the database, clear the cookie and redirect to the login page
-    res.clearCookie("user_id");
-    return res.redirect("/login");
-  }
+
+  // Filter the urlDatabase to show only the URLs for the logged-in user
+  const filteredURLs = Object.keys(urlDatabase)
+    .filter(key => urlDatabase[key].userID === user_id)
+    .reduce((obj, key) => {
+      obj[key] = urlDatabase[key];
+      return obj;
+    }, {});
+
+  console.log('filteredURLs:', filteredURLs);
+
+  // Render the template with the filtered URLs or a message if there are no URLs
   const templateVars = {
     user_id: user.email,
-    urls: urlDatabase
+    urls: filteredURLs,
+    message: !Object.keys(filteredURLs).length ? "You have no URLs yet" : null
   };
+
+  console.log('templateVars:', templateVars);
+
   res.render("urls_index", templateVars);
 });
 
 
-// Create a new short URL and add it to the URL database
+
+
+// 2- Handle creating a new short URL
 app.post("/urls", (req, res) => {
-  const { longURL } = req.body;
-  if (!req.cookies.user_id || !users[req.cookies.user_id]) { // Check if user is not logged in
-    return res.status(401).send("You need to be logged in to shorten URLs"); // Return a 401 status code and error message
+  const user_id = req.cookies.user_id;
+  const user = users[user_id];
+  
+  // Check if the user is not logged in
+  if (!user) {
+    return res.status(401).send("You need to be logged in to create a new URL");
   }
-  const shortURL = generateRandomString(); // Generate a new short URL
-  urlDatabase[shortURL] = { longURL: longURL, userID: req.cookies.user_id }; // Save the URL to the database
-  res.redirect(`/urls`); // Redirect to the new URL page
+  
+  const shortURL = generateRandomString();
+  const longURL = req.body.longURL;
+  
+  // Add the new URL to the urlDatabase with the user's ID
+  urlDatabase[shortURL] = { longURL: longURL, userID: user_id };
+  
+  // Redirect to the page to view the new URL
+  res.redirect(`/urls`);
 });
 
 
-// Display the form to create a new short URL
+// 3- Display the form to create a new short URL
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies.user_id || !users[req.cookies.user_id]) { // Check if user is not logged in
-    return res.redirect('/login'); // Redirect to login page
+  const user_id = req.cookies.user_id;
+  const user = users[user_id];
+  
+  // Check if the user is not logged in
+  if (!user) {
+    return res.status(401).send("You need to be logged in to view this page");
   }
+  
   // Render the template if user is logged in
   const templateVars = {
-    user_id: users[req.cookies.user_id].email
+    user_id: user.email
   };
   res.render("urls_new", templateVars);
 });
 
 
-// GET /u/:id route
+
+
+// 4- GET /u/:id route
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id]?.longURL; // Get the long URL from the database using the short URL ID
-  if (!longURL) { // If ID is not found in the database
+  if (!urlDatabase[req.params.id]) { // If ID is not found in the database
     return res.status(404).send("The requested URL was not found."); // Return a 404 status code and error message
   }
+  const longURL = urlDatabase[req.params.id].longURL; // Get the long URL from the database using the short URL ID
   res.redirect(longURL); // Redirect to the long URL
 });
 
 
-// Handle GET requests to the /urls/:id endpoint
-// This endpoint takes a short URL as a parameter and redirects the user to the corresponding long URL
+// 5- Handle GET requests to the /urls/:id endpoint
 app.get("/urls/:id", (req, res) => {
-
   // Extract the short URL parameter from the request
   const shortURL = req.params.id;
 
   // Look up the corresponding long URL from the urlDatabase using the short URL
   const longURL = urlDatabase[shortURL].longURL;
+  const templateVars = {
+    id: shortURL,
+    longURL
+  }
+
 
   // Redirect the user to the long URL
-  res.redirect(longURL);
+  res.render("urls_show", templateVars);
 });
 
 
-// Update a long URL in the URL database
-app.post("/urls/:id", (req, res) => {
-  const id = req.params.id;
-  urlDatabase[id] = req.body.longURL;
-  console.log(`URL ${id} updated to ${urlDatabase[id]}`);
+// 6- Update a long URL in the URL database
+app.get("/urls/:id", (req, res) => {
+  const user_id = req.cookies.user_id;
+  const user = users[user_id];
+  
+  // Check if the user is not logged in
+  if (!user) {
+    return res.status(401).send("You need to be logged in to view this page");
+  }
+  
+  // Check if the URL belongs to the user
+  const url = urlDatabase[req.params.id];
+  if (!url) {
+    return res.status(404).send("This URL does not exist");
+  }
+  if (url.userID !== user_id) {
+    return res.status(403).send("You do not have permission to access this URL");
+  }
+  
+  // Render the template with the URL data
+  const templateVars = {
+    user_id: user.email,
+    shortURL: req.params.id,
+    longURL: url.longURL
+  };
+  res.render("urls_show", templateVars);
+});
+
+
+
+// 7 - Edit a URL
+app.post("/urls/:id/edit", (req, res) => {
+  const userID = req.cookies.user_id;
+  const urlID = req.params.id;
+  const newLongURL = req.body.longURL;
+  const url = urlDatabase[urlID];
+
+  // check if the user is logged in
+  if (!userID) {
+    return res.status(401).send("Please login to edit URLs.");
+  }
+
+  // check if the URL exists
+  if (!url) {
+    return res.status(404).send("URL not found.");
+  }
+
+  // check if the user owns the URL
+  if (url.userID !== userID) {
+    return res.status(403).send("You do not have permission to edit this URL.");
+  }
+
+  // update the longURL for the URL with the given ID
+  urlDatabase[urlID].longURL = newLongURL;
+
   res.redirect("/urls");
 });
 
 
-// Display a specific URL and its corresponding short URL
+// 8- Display a specific URL and its corresponding short URL
 app.get("/urls/:shortURL", (req, res) => {
+  const user_id = req.cookies.user_id;
+  const user = users[user_id];
   const shortURL = req.params.shortURL;
+
+
+
+  // Check if the short URL exists
+  if (!urlDatabase[shortURL]) {
+    return res.status(404).send("Short URL not found");
+  }
+  
+  // Check if the user is not logged in
+  if (!user) {
+    return res.status(401).send("You need to be logged in to view this page");
+  }
+  
+  // Check if the short URL belongs to the logged-in user
+  if (urlDatabase[shortURL].userID !== user_id) {
+    return res.status(403).send("You don't have permission to access this URL");
+  }
+  
   const longURL = urlDatabase[shortURL];
+  
+  // Render the template with the short URL, long URL and user info
   const templateVars = { shortURL, longURL, id: shortURL, url: { shortURL, longURL }, user_id : null };
   console.log(`Showing URL details for short URL: ${shortURL}`);
   res.render("urls_show", templateVars);
 });
 
 
-// Delete a URL from the URL database
-app.post("/urls/:shortURL/delete", (req, res) => {
-  const shortURL = req.params.shortURL;
-  console.log(`Deleting URL with short URL: ${shortURL}`);
-  delete urlDatabase[shortURL];
+
+// 9- Delete a URL from the URL database
+app.post("/urls/:id/delete", (req, res) => {
+  const user_id = req.cookies.user_id;
+  const url = urlDatabase[req.params.id];
+
+  // Check if URL with given ID exists
+  if (!url) {
+    return res.status(404).send("URL with given ID does not exist");
+  }
+
+  // Check if user is logged in
+  if (!user_id) {
+    return res.status(401).send("You need to be logged in to delete this URL");
+  }
+
+  // Check if user owns the URL
+  if (url.userID !== user_id) {
+    return res.status(403).send("You do not own this URL");
+  }
+
+  // Delete the URL from the database
+  delete urlDatabase[req.params.id];
+
+  // Redirect to /urls
   res.redirect("/urls");
 });
 
 
 
-
-
-// This route handles the login POST request.
+// 10 -This route handles the login POST request.
 app.post("/login", (req, res) => {
   console.log(req.cookies)
   if (req.body.email.length === 0) {
@@ -187,7 +318,7 @@ app.post("/login", (req, res) => {
 });
 
 
-// Route handler for GET request to path "/login"
+// 11 - Route handler for GET request to path "/login"
 app.get('/login', (req, res) => {
   console.log('Cookies:', req.cookies); // Debugging line
   const user_id = req.cookies.user_id;
@@ -201,7 +332,7 @@ app.get('/login', (req, res) => {
 });
 
 
-// Route handler for GET request to path "/logout"
+// 12- Route handler for GET request to path "/logout"
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
   res.redirect("/login");
@@ -209,7 +340,7 @@ app.post("/logout", (req, res) => {
 });
 
 
-// Handle GET requests to the /register endpoint
+// 13- Handle GET requests to the /register endpoint
 app.get('/register', (req, res) => {
   const templateVars = {
     user_id: req.cookies['user_id'],
@@ -220,7 +351,7 @@ app.get('/register', (req, res) => {
 });
 
 
-// This route handles user registration
+// 14- This route handles user registration
 app.post('/register', (req, res) => {
   const { email, password } = req.body;
   console.log(`Attempting to register user with email: ${email}`);
@@ -250,7 +381,7 @@ app.post('/register', (req, res) => {
 });
 
 
-// Helper function to lookup a user by email
+// 15- Helper function to lookup a user by email
 function getUserByEmail(email) {
   for (let userId in users) {
     const user = users[userId];
@@ -265,7 +396,7 @@ function getUserByEmail(email) {
 }
 
 
-// Start listening for incoming HTTP requests on the specified port
+// 16- Start listening for incoming HTTP requests on the specified port
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
