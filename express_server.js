@@ -67,7 +67,17 @@ function generateRandomString() {
 
 
 
-// 1- // Route to display a list of URLs for a user
+// 1- // Route to display a list of URLs for a user by using UrlsForUser function.
+
+function urlsForUser(id) {
+  return Object.keys(urlDatabase)
+    .filter(key => urlDatabase[key].userID === id)
+    .reduce((obj, key) => {
+      obj[key] = urlDatabase[key];
+      return obj;
+    }, {});
+}
+
 app.get("/urls", (req, res) => {
   const user_id = req.cookies.user_id;
   const user = users[user_id];
@@ -81,28 +91,22 @@ app.get("/urls", (req, res) => {
     return res.status(401).send("You need to be logged in to view this page");
   }
 
-  // Filter the urlDatabase to show only the URLs for the logged-in user
-  const filteredURLs = Object.keys(urlDatabase)
-    .filter(key => urlDatabase[key].userID === user_id)
-    .reduce((obj, key) => {
-      obj[key] = urlDatabase[key];
-      return obj;
-    }, {});
+  // Get the URLs for the logged-in user
+  const userUrls = urlsForUser(user_id);
 
-  console.log('filteredURLs:', filteredURLs);
+  console.log('userUrls:', userUrls);
 
-  // Render the template with the filtered URLs or a message if there are no URLs
+  // Render the template with the user's URLs or a message if there are no URLs
   const templateVars = {
     user_id: user.email,
-    urls: filteredURLs,
-    message: !Object.keys(filteredURLs).length ? "You have no URLs yet" : null
+    urls: userUrls,
+    message: !Object.keys(userUrls).length ? "You have no URLs yet" : null
   };
 
   console.log('templateVars:', templateVars);
 
   res.render("urls_index", templateVars);
 });
-
 
 
 // 2- Route to create a new URL in the urlDatabase
