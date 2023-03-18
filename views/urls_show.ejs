@@ -35,15 +35,15 @@
       <div class="card text-center">
         <div class="card-header"></div>
         <div class="card-body">
-          <h3 class="card-title">TinyURL for: <strong><%= url.longURL %></strong></h3>
+          <h3 class="card-title">TinyURL for: <strong><%= longURL %></strong></h3>
           <p class="card-text">
-          <h4>Short URL:<a href="/u/<%= url.shortURL %>"><%= url.shortURL %></a>
+          <h4>Short URL:<a href="/u/<%= id %>"><%= id %></a>
           </h4>
           </p>
         </div>
         <div class="card-footer text-muted">
           <h2>Edit</h2>
-          <form method="POST" action="/urls/<%= url.shortURL %>">
+          <form method="POST" action="/urls/<%= id %>/edit">
             <label>New URL:</label>
             <input type="text" name="longURL" placeholder=" " style="width: 300px; margin: 1em">
             <button type="submit" class="btn btn-primary">Submit</button>
