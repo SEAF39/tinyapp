@@ -15,14 +15,14 @@ Set the maximum age of the cookie to 24 hours
  */
 const cookieSession = require('cookie-session');
 app.use(cookieSession({
-name: 'session',
-keys: ['secretkey1', 'secretkey2', 'secretkey3'],
-maxAge: 24 * 60 * 60 * 1000
+  name: 'session',
+  keys: ['secretkey1', 'secretkey2', 'secretkey3'],
+  maxAge: 24 * 60 * 60 * 1000
 }));
 
 
 app.get('/get-session', function(req, res) {
-  var user_id = req.session.user_id;
+  let user_id = req.session.user_id;
   res.send('User ID is ' + user_id);
 });
 
@@ -217,9 +217,9 @@ app.get("/urls/:id", (req, res) => {
   console.log("longURL:", longURL);
   
   const templateVars = {
-  id: shortURL,
-  longURL
-  }
+    id: shortURL,
+    longURL
+  };
   
   res.render("urls_show", templateVars);
 });
