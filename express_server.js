@@ -4,7 +4,16 @@
 const express = require("express");
 const app = express();
 const PORT = 8080;
-const bcrypt = require('bcrypt');
+
+
+/*
+Import the bcryptjs library, Define the password to be hashed (assuming it's found in the req.body object),Hash the password using bcrypt and a salt factor of 10 (10 rounds of hashing).
+ */
+const bcrypt = require('bcryptjs');
+const password = "purple-monkey-dinosaur";
+const hashedPassword = bcrypt.hashSync(password, 10);
+
+
 
 /*Add the cookie-parser middleware to the Express application
 cookie-parser is a third-party middleware that adds cookie parsing functionality to Express
@@ -193,11 +202,11 @@ app.get("/urls/:id", (req, res) => {
   }
   
   res.render("urls_show", templateVars);
-  });
+});
 
 
 /*
- This route handler displays the details of a specific URL to the user, only if they are logged in and the URL belongs to them. It first checks if the user is logged in, then checks if the URL exists in the database and if it belongs to the user. If all checks pass, it renders the "urls_show" template with the URL data. It also logs helpful messages for debugging purposes.
+This route handler displays the details of a specific URL to the user, only if they are logged in and the URL belongs to them. It first checks if the user is logged in, then checks if the URL exists in the database and if it belongs to the user. If all checks pass, it renders the "urls_show" template with the URL data. It also logs helpful messages for debugging purposes.
  */
 app.get("/urls/:id", (req, res) => {
   const user_id = req.cookies.user_id;
@@ -226,7 +235,6 @@ app.get("/urls/:id", (req, res) => {
   console.log("URL data:", templateVars);
   res.render("urls_show", templateVars);
 });
-
 
 
 // 7 - This Route handles the POST request to edit a URL in the urlDatabase.
@@ -397,35 +405,42 @@ app.get('/register', (req, res) => {
 
 // 14- Route for handling user registration
 app.post('/register', (req, res) => {
-  const { email, password } = req.body;
+  const { name, email, password } = req.body;
   console.log(`Attempting to register user with email: ${email}`);
+
+  // Validate that the email and password fields are present
   if (!email || !password) {
     console.log(`Registration failed: email and password are required`);
     return res.status(400).send('The Email and password are required');
   }
+
+  // Check if the user already exists in the database
   if (getUserByEmail(email)) {
     console.log(`Registration failed: email ${email} already exists`);
     return res.status(400).send('This Email already exists');
   }
-  // Code to create a new user and save to database goes here
-  res.redirect('/login');
 
   // Hash the password and generate a user ID
   const hashedPassword = bcrypt.hashSync(password, 10);
   const userId = generateRandomString();
-  
-  // Add the new user to the database
+
+  // Save the new user data to the database
   users[userId] = {
     id: userId,
     email: email,
     password: hashedPassword
   };
+
+  // Log a success message and send a response to the client
   console.log(`New user registered: ${email}`);
   res.status(201).send(`User registered successfully: ${email}`);
+
+  // Redirect the user to the login page
+  res.redirect('/login');
 });
 
 
-// 15- Helper function to lookup a user by email
+// 15- Helper function to lookup a user by email.
 function getUserByEmail(email) {
   for (let userId in users) {
     const user = users[userId];
@@ -440,7 +455,7 @@ function getUserByEmail(email) {
 }
 
 
-// 16- Start listening for incoming HTTP requests on the specified port
+// 16- Start listening for incoming HTTP requests on the specified port.
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
