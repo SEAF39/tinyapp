@@ -26,12 +26,17 @@ const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
-// The URL database that maps short URLs to long URLs
-const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
-};
 
+const urlDatabase = {
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
+};
 
 // Create a global object called users to store and access the users in the app
 const users = {
@@ -47,6 +52,7 @@ const users = {
   },
 };
 
+
 // Helper function to generate a random string
 function generateRandomString() {
   let result = "";
@@ -60,38 +66,80 @@ function generateRandomString() {
 }
 
 
-// Display the form to create a new short URL
-app.get("/urls/new", (req, res) => {
-  console.log("Rendering the urls_new template");
+// GET /urls route
+app.get("/urls", (req, res) => {
+  if (!req.cookies.user_id) { // If user is not logged in, redirect to the login page
+    return res.redirect("/login");
+  }
+  const user = users[req.cookies.user_id];
+  if (!user) { // If user is not found in the database, clear the cookie and redirect to the login page
+    res.clearCookie("user_id");
+    return res.redirect("/login");
+  }
   const templateVars = {
-    user_id: users[req.cookies.user_id] ? users[req.cookies.user_id].email : undefined,
+    user_id: user.email,
+    urls: urlDatabase
   };
-  console.log("Template variables:", templateVars);
-  res.render("urls_new",templateVars);
-  return res.redirect('/urls');
+  res.render("urls_index", templateVars);
 });
 
 
 // Create a new short URL and add it to the URL database
 app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString();
-  const longURL = req.body.longURL;
-  urlDatabase[shortURL] = longURL;
-  console.log(`Added URL ${longURL} with short URL ${shortURL}`);
-  res.redirect('/urls');
+  const { longURL } = req.body;
+  if (!req.cookies.user_id || !users[req.cookies.user_id]) { // Check if user is not logged in
+    return res.status(401).send("You need to be logged in to shorten URLs"); // Return a 401 status code and error message
+  }
+  const shortURL = generateRandomString(); // Generate a new short URL
+  urlDatabase[shortURL] = { longURL: longURL, userID: req.cookies.user_id }; // Save the URL to the database
+  res.redirect(`/urls`); // Redirect to the new URL page
 });
 
 
-// Redirect to the long URL corresponding to a short URL
-app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  if (longURL) {
-    console.log(`Redirecting to long URL: ${longURL}`);
-    res.redirect(longURL);
-  } else {
-    console.log(`Short URL not found: ${req.params.shortURL}`);
-    res.status(404).send("Short URL not found");
+// Display the form to create a new short URL
+app.get("/urls/new", (req, res) => {
+  if (!req.cookies.user_id || !users[req.cookies.user_id]) { // Check if user is not logged in
+    return res.redirect('/login'); // Redirect to login page
   }
+  // Render the template if user is logged in
+  const templateVars = {
+    user_id: users[req.cookies.user_id].email
+  };
+  res.render("urls_new", templateVars);
+});
+
+
+// GET /u/:id route
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id]?.longURL; // Get the long URL from the database using the short URL ID
+  if (!longURL) { // If ID is not found in the database
+    return res.status(404).send("The requested URL was not found."); // Return a 404 status code and error message
+  }
+  res.redirect(longURL); // Redirect to the long URL
+});
+
+
+// Handle GET requests to the /urls/:id endpoint
+// This endpoint takes a short URL as a parameter and redirects the user to the corresponding long URL
+app.get("/urls/:id", (req, res) => {
+
+  // Extract the short URL parameter from the request
+  const shortURL = req.params.id;
+
+  // Look up the corresponding long URL from the urlDatabase using the short URL
+  const longURL = urlDatabase[shortURL].longURL;
+
+  // Redirect the user to the long URL
+  res.redirect(longURL);
+});
+
+
+// Update a long URL in the URL database
+app.post("/urls/:id", (req, res) => {
+  const id = req.params.id;
+  urlDatabase[id] = req.body.longURL;
+  console.log(`URL ${id} updated to ${urlDatabase[id]}`);
+  res.redirect("/urls");
 });
 
 
@@ -114,24 +162,8 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 
-// Update a long URL in the URL database
-app.post("/urls/:id", (req, res) => {
-  const id = req.params.id;
-  urlDatabase[id] = req.body.longURL;
-  console.log(`URL ${id} updated to ${urlDatabase[id]}`);
-  res.redirect("/urls");
-});
 
 
-//Route handler for GET request to path "/urls and Create an object to hold variables to be used in the template
-app.get('/urls', (req, res) => {
-  const templateVars = {
-    user_id: users[req.cookies.user_id] ? users[req.cookies.user_id].email : undefined,
-    urls: urlDatabase
-  };
-  console.log(templateVars);
-  res.render('urls_index', templateVars);
-});
 
 // This route handles the login POST request.
 app.post("/login", (req, res) => {
@@ -157,12 +189,15 @@ app.post("/login", (req, res) => {
 
 // Route handler for GET request to path "/login"
 app.get('/login', (req, res) => {
-  const templateVars = {
-    user_id: req.cookies['user_id'],
-    urls: urlDatabase
-  };
-  console.log(templateVars);
-  res.render('urls_login', templateVars);
+  console.log('Cookies:', req.cookies); // Debugging line
+  const user_id = req.cookies.user_id;
+  if (user_id) {
+    console.log(`User ID ${user_id} found in cookies`); // Debugging line
+    res.redirect("/urls");
+  } else {
+    console.log('User ID not found in cookies'); // Debugging line
+    res.render('urls_login', {user_id: user_id});
+  }
 });
 
 
