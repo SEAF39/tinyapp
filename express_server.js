@@ -7,6 +7,27 @@ const PORT = 8080;
 
 
 /*
+Import the cookie-session middleware
+Use the cookie-session middleware and configure it
+Set the cookie name
+Set the secret keys for encryption
+Set the maximum age of the cookie to 24 hours
+ */
+const cookieSession = require('cookie-session');
+app.use(cookieSession({
+name: 'session',
+keys: ['secretkey1', 'secretkey2', 'secretkey3'],
+maxAge: 24 * 60 * 60 * 1000
+}));
+
+
+app.get('/get-session', function(req, res) {
+  var user_id = req.session.user_id;
+  res.send('User ID is ' + user_id);
+});
+
+
+/*
 Import the bcryptjs library, Define the password to be hashed (assuming it's found in the req.body object),Hash the password using bcrypt and a salt factor of 10 (10 rounds of hashing).
  */
 const bcrypt = require('bcryptjs');
@@ -86,9 +107,8 @@ function urlsForUser(id) {
       return obj;
     }, {});
 }
-
 app.get("/urls", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const user = users[user_id];
 
   console.log('user_id:', user_id);
@@ -121,7 +141,7 @@ app.get("/urls", (req, res) => {
 // 2- Route to create a new URL in the urlDatabase
 app.post("/urls", (req, res) => {
   // Get the user ID from the cookie
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   // Find the user object in the users database using the user ID
   const user = users[user_id];
 
@@ -151,7 +171,7 @@ app.post("/urls", (req, res) => {
 // 3-  Route to display the form for creating a new URL
 app.get("/urls/new", (req, res) => {
   // Get the user ID from the cookie
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   // Find the user object in the users database using the user ID
   const user = users[user_id];
 
@@ -205,11 +225,11 @@ app.get("/urls/:id", (req, res) => {
 });
 
 
-/*
+/* -6 -
 This route handler displays the details of a specific URL to the user, only if they are logged in and the URL belongs to them. It first checks if the user is logged in, then checks if the URL exists in the database and if it belongs to the user. If all checks pass, it renders the "urls_show" template with the URL data. It also logs helpful messages for debugging purposes.
  */
 app.get("/urls/:id", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const user = users[user_id];
   
   if (!user) {
@@ -239,7 +259,7 @@ app.get("/urls/:id", (req, res) => {
 
 // 7 - This Route handles the POST request to edit a URL in the urlDatabase.
 app.post("/urls/:id/edit", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const urlID = req.params.id;
   const newLongURL = req.body.longURL;
   const url = urlDatabase[urlID];
@@ -273,7 +293,7 @@ app.post("/urls/:id/edit", (req, res) => {
 
 // 8- Display a specific URL and its corresponding short URL
 app.get("/urls/:shortURL", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const user = users[user_id];
   const shortURL = req.params.shortURL;
 
@@ -309,7 +329,7 @@ app.get("/urls/:shortURL", (req, res) => {
 9- This code defines an Express route handler function that deletes a URL from a database if the user is logged in and owns the URL. It also includes error handling to check if the URL exists and if the user is authorized to delete it.
  */
 app.post("/urls/:id/delete", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const url = urlDatabase[req.params.id];
 
   // Check if URL with given ID exists
@@ -339,30 +359,35 @@ app.post("/urls/:id/delete", (req, res) => {
 
 
 // 10 -This route handles the login POST request form submission.
-app.post('/login', (req, res) => {
-  const { email, password } = req.body;
-  console.log(`Attempting to login user with email: ${email}`);
+app.post("/login", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
 
-  // Check if the user exists in the database
-  const user = getUserByEmail(email);
-  if (!user) {
-    console.log(`Login failed: email ${email} not found`);
-    return res.status(403).send('No user with that email found.');
+  // Find the user with the provided email
+  const user = findUserByEmail(email);
+
+  if (!user || !bcrypt.compareSync(password, user.password)) {
+    return res.status(401).send("Invalid email or password");
   }
 
-  // Check if the password is correct
-  if (!bcrypt.compareSync(password, user.password)) {
-    console.log(`Login failed: incorrect password`);
-    return res.status(403).send('Incorrect password.');
-  }
+  // Set the user_id in the session
+  req.session.user_id = user.id;
+  console.log('user_id set to:', req.session.user_id);
 
-  // Set the user_id cookie and redirect to the URLs page
-  res.cookie('user_id', user.id);
-  res.redirect('/urls');
-
-  // Log a success message
-  console.log(`User ${email} successfully logged in`);
+  res.redirect("/urls");
 });
+
+
+function findUserByEmail(email) {
+  for (const userId in users) {
+    if (users[userId].email === email) {
+      return users[userId];
+    }
+  }
+  return null;
+}
+
+
 
 
 
@@ -370,13 +395,13 @@ app.post('/login', (req, res) => {
 Render the login page if the user is not logged in
 Otherwise, redirect to the URLs page */
 app.get('/login', (req, res) => {
-  console.log('Cookies:', req.cookies);
-  const user_id = req.cookies.user_id;
+  console.log('session:', req.session);
+  const user_id = req.session.user_id;
   if (user_id) {
-    console.log(`User ID ${user_id} found in cookies`);
+    console.log(`User ID ${user_id} found in session`);
     res.redirect("/urls");
   } else {
-    console.log('User ID not found in cookies');
+    console.log('User ID not found in session');
     res.render('urls_login', {user_id: user_id});
   }
 });
@@ -387,18 +412,19 @@ app.get('/login', (req, res) => {
 This route handles the POST request to /logout It clears the user_id cookie and redirects to /login
 */
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  // Clear the user_id from the session
+  req.session.user_id = null;
+  console.log("LogOut Clearing user_id from session:", req.session.user_id);
   res.redirect("/login");
-  console.log("LogOut Clearing user_id cookie:", req.cookies.user_id);
 });
 
 
-/*Route handler for the "/register" endpoint, which is used to render the registration page.The route handler retrieves the user ID from the cookies and passes it to the templateVars object, along with the urlDatabase object.
+/*Route handler for the "/register" endpoint, which is used to render the registration page.The route handler retrieves the user ID from the session and passes it to the templateVars object, along with the urlDatabase object.
 It then renders the "urls_register" template and sends it back to the client.
  */
 app.get('/register', (req, res) => {
   const templateVars = {
-    user_id: req.cookies['user_id'],
+    user_id: req.session['user_id'],
     urls: urlDatabase
   };
   console.log(templateVars);
