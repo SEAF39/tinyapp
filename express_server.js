@@ -6,6 +6,11 @@ const app = express();
 const PORT = 8080;
 
 
+// This code imports the assert library from the chai package and the getUserByEmail function from the ../helpers module.
+const { assert } = require('chai');
+const { getUserByEmail } = require('../helpers');
+
+
 /*
 Import the cookie-session middleware
 Use the cookie-session middleware and configure it
@@ -21,6 +26,7 @@ app.use(cookieSession({
 }));
 
 
+// This route handles GET requests to the '/get-session' endpoint
 app.get('/get-session', function(req, res) {
   let user_id = req.session.user_id;
   res.send('User ID is ' + user_id);
@@ -33,7 +39,6 @@ Import the bcryptjs library, Define the password to be hashed (assuming it's fou
 const bcrypt = require('bcryptjs');
 const password = "purple-monkey-dinosaur";
 const hashedPassword = bcrypt.hashSync(password, 10);
-
 
 
 /*Add the cookie-parser middleware to the Express application
@@ -56,7 +61,7 @@ const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
-
+// object stores shortURL-longURL key-value pairs, as well as their associated userIDs
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
@@ -67,6 +72,7 @@ const urlDatabase = {
     userID: "aJ48lW",
   },
 };
+
 
 // Create a global object called users to store and access the users in the app
 const users = {
@@ -83,6 +89,23 @@ const users = {
 };
 
 
+/* 
+This is a test users database containing two users ,Each user has an id, email, and password property.
+ */
+const testUsers = {
+  "userRandomID": {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur"
+  },
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
+  }
+};
+
+
 // Helper function to generate a random string
 function generateRandomString() {
   let result = "";
@@ -96,9 +119,7 @@ function generateRandomString() {
 }
 
 
-
 // 1- // Route to display a list of URLs for a user by using UrlsForUser function..
-
 function urlsForUser(id) {
   return Object.keys(urlDatabase)
     .filter(key => urlDatabase[key].userID === id)
@@ -207,7 +228,6 @@ app.get("/u/:id", (req, res) => {
 });
 
 
-
 // 5- Handle GET requests to the /urls/:id endpoint
 app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
@@ -290,7 +310,6 @@ app.post("/urls/:id/edit", (req, res) => {
 });
 
 
-
 // 8- Display a specific URL and its corresponding short URL
 app.get("/urls/:shortURL", (req, res) => {
   const user_id = req.session.user_id;
@@ -322,7 +341,6 @@ app.get("/urls/:shortURL", (req, res) => {
   console.log(`Showing URL details for short URL: ${shortURL}`);
   res.render("urls_show", templateVars);
 });
-
 
 
 /*
@@ -357,7 +375,6 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 
-
 // 10 -This route handles the login POST request form submission.
 app.post("/login", (req, res) => {
   const email = req.body.email;
@@ -386,8 +403,6 @@ function findUserByEmail(email) {
   }
   return null;
 }
-
-
 
 
 
