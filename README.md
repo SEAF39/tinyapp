@@ -8,13 +8,20 @@ This project utilizes specific technologies such as:
 - Template Engine: EJS
 
 
+# Project Views:
+The following are the final project views:
+
+## Register Page:
+!["1_Register"](./screenshots/1_register)
+
+
+
 ## Dependencies:
 
 - Node.js
 - Express
 - EJS
 - Cookie-Session
-- Cookie-session
 - Bcrypt
 - Bcryptjs
 - Bootstrap
@@ -27,5 +34,5 @@ To register, go to: http://localhost:8080/register.
 To log in, go to: http://localhost:8080/login.
 Use the nagivation bar to:
 Create new shorten URLs
-Access list of URLs (must be logged in first)
-Utilize Edit and Delete buttons to update your URLs in My URLs
+View list of URLs ( You mustto login first)
+Edit and Delete buttons to update your URLs in Your URLs
