@@ -1,8 +1,11 @@
 # TinyApp Project
 
-TinyApp is a full stack web application built with Node and Express that allows users to shorten long URLs .This app will take a regular URL and transform it into an encoded version, which redirects back to the original URL.
+TinyApp is a full stack web application built with Node and Express that allows users to add shorten long URLs .
+and edit , detete URLs. redirect to original URL.
 
 This project utilizes specific technologies such as:
+
+
 - Web Server: Node.js
 - Middleware: Express
 - Template Engine: EJS
@@ -11,9 +14,29 @@ This project utilizes specific technologies such as:
 # Project Views:
 The following are the final project views:
 
+
 ## Register Page:
 !["1_register"](./screenshots/1_register.png)
 
+
+## Login Page:
+!["2_login"](./screenshots/2_Login.png)
+
+
+## Main Page:
+!["3_mainpage"](./screenshots/3_mainpage.png)
+
+
+## Create New URL Page:
+!["4_createurls"](./screenshots/4_createurls.png)
+
+
+## URL List Page:
+!["5_urls"](./screenshots/5_urls.png)
+
+
+## Edit URLs Page:
+!["6_edit"](./screenshots/6_edit.png)
 
 
 ## Dependencies:
@@ -21,10 +44,12 @@ The following are the final project views:
 - Node.js
 - Express
 - EJS
-- Cookie-Session
 - Bcrypt
 - Bcryptjs
 - Bootstrap
+- Cookie-Session
+- Cookie-parser
+
 
 ## Getting Started:
 
