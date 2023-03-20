@@ -20,7 +20,7 @@ The following are the final project views:
 
 
 ## Login Page:
-!["2_login"](./screenshots/2_Login.png)
+!["2_login"](./screenshots/2_login.png)
 
 
 ## Main Page:
