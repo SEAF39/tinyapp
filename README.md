@@ -12,7 +12,7 @@ This project utilizes specific technologies such as:
 The following are the final project views:
 
 ## Register Page:
-!["1_Register"](./screenshots/1_register)
+!["1_register"](./screenshots/1_register)
 
 
 
