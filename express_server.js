@@ -1,24 +1,13 @@
 // express_server.js
 
-// Import the Express module
 const express = require("express");
+const { getUserByEmail,generateRandomString, urlsForUser} = require('./helpers');
+const { urlDatabase, users} = require('./data');
+
 const app = express();
 const PORT = 8080;
 
 
-// This code imports the assert library from the chai package and the getUserByEmail function from the ../helpers module.
-
-/* const { assert } = require('chai');
-const { getUserByEmail } = require('../helpers');
- */
-
-/*
-Import the cookie-session middleware
-Use the cookie-session middleware and configure it
-Set the cookie name
-Set the secret keys for encryption
-Set the maximum age of the cookie to 24 hours
- */
 const cookieSession = require('cookie-session');
 app.use(cookieSession({
   name: 'session',
@@ -53,109 +42,24 @@ app.use(cookieParser());
 app.set("view engine", "ejs");
 
 
-// Enable parsing of URL-encoded data
 app.use(express.urlencoded({ extended: true }));
 
-
-// enable body parsing middleware for POST requests
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
-// object stores shortURL-longURL key-value pairs, as well as their associated userIDs
-const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "aJ48lW",
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "aJ48lW",
-  },
-};
-
-
-// Create a global object called users to store and access the users in the app
-const users = {
-  userRandomID: {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur",
-  },
-  user2RandomID: {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk",
-  },
-};
-
-
-/* 
-This is a test users database containing two users ,Each user has an id, email, and password property.
- */
-const testUsers = {
-  "userRandomID": {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur"
-  },
-  "user2RandomID": {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk"
-  }
-};
-
-
-// Helper function to generate a random string
-function generateRandomString() {
-  let result = "";
-  const characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < 6; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  console.log(`Generated random string: ${result}`);
-  return result;
-}
-
-
-// 1- // Route to display a list of URLs for a user by using UrlsForUser function..
-function urlsForUser(id) {
-  return Object.keys(urlDatabase)
-    .filter(key => urlDatabase[key].userID === id)
-    .reduce((obj, key) => {
-      obj[key] = urlDatabase[key];
-      return obj;
-    }, {});
-}
 app.get("/urls", (req, res) => {
   const user_id = req.session.user_id;
   const user = users[user_id];
-
-  console.log('user_id:', user_id);
-  console.log('user:', user);
-
-  // Check if the user is not logged in
   if (!user) {
-    console.log('User is not logged in');
     return res.status(401).send("You need to be logged in to view this page");
   }
-
-  // Get the URLs for the logged-in user
-  const userUrls = urlsForUser(user_id);
-
-  console.log('userUrls:', userUrls);
-
-  // Render the template with the user's URLs or a message if there are no URLs
+  const userUrls = urlsForUser(user_id, urlDatabase);
   const templateVars = {
     user_id: user.email,
     urls: userUrls,
     message: !Object.keys(userUrls).length ? "You have no URLs yet" : null
   };
-
-  console.log('templateVars:', templateVars);
-
   res.render("urls_index", templateVars);
 });
 
@@ -246,9 +150,7 @@ app.get("/urls/:id", (req, res) => {
 });
 
 
-/* -6 -
-This route handler displays the details of a specific URL to the user, only if they are logged in and the URL belongs to them. It first checks if the user is logged in, then checks if the URL exists in the database and if it belongs to the user. If all checks pass, it renders the "urls_show" template with the URL data. It also logs helpful messages for debugging purposes.
- */
+
 app.get("/urls/:id", (req, res) => {
   const user_id = req.session.user_id;
   const user = users[user_id];
@@ -376,34 +278,16 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 
-// 10 -This route handles the login POST request form submission.
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-
-  // Find the user with the provided email
-  const user = findUserByEmail(email);
-
+  const user = getUserByEmail(email, users);
   if (!user || !bcrypt.compareSync(password, user.password)) {
     return res.status(401).send("Invalid email or password");
   }
-
-  // Set the user_id in the session
   req.session.user_id = user.id;
-  console.log('user_id set to:', req.session.user_id);
-
   res.redirect("/urls");
 });
-
-
-function findUserByEmail(email) {
-  for (const userId in users) {
-    if (users[userId].email === email) {
-      return users[userId];
-    }
-  }
-  return null;
-}
 
 
 
@@ -423,10 +307,6 @@ app.get('/login', (req, res) => {
 });
 
 
-/*
-12- Route handler for GET request to path "/logout"
-This route handles the POST request to /logout It clears the user_id cookie and redirects to /login
-*/
 app.post("/logout", (req, res) => {
   // Clear the user_id from the session
   req.session.user_id = null;
@@ -439,8 +319,13 @@ app.post("/logout", (req, res) => {
 It then renders the "urls_register" template and sends it back to the client.
  */
 app.get('/register', (req, res) => {
+  // Check if the user is already logged in
+  if (req.session.userId) {
+    return res.redirect('/urls');
+  }
+
   const templateVars = {
-    user_id: req.session['user_id'],
+    user_id: req.session.userId,
     urls: urlDatabase
   };
   console.log(templateVars);
@@ -476,9 +361,9 @@ app.post('/register', (req, res) => {
     email: email,
     password: hashedPassword
   };
+  req.session.user_id = userId;
 
-  // Redirect the user to the login page
-  res.redirect('/login');
+  res.redirect('/urls');
 
   // Log a success message and send a response to the client
   console.log(`New user registered: ${email}`);
@@ -486,19 +371,8 @@ app.post('/register', (req, res) => {
 });
 
 
-// 15- Helper function to lookup a user by email.
-function getUserByEmail(email) {
-  for (let userId in users) {
-    const user = users[userId];
-    console.log(`Checking user with email ${user.email}`);
-    if (user.email === email) {
-      console.log(`Found user with email ${email}`);
-      return user;
-    }
-  }
-  console.log(`User with email ${email} not found`);
-  return null;
-}
+
+
 
 
 // 16- Start listening for incoming HTTP requests on the specified port.
