@@ -1,4 +1,5 @@
-// object stores shortURL-longURL key-value pairs, as well as their associated userIDs
+// database.js
+
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
@@ -10,8 +11,6 @@ const urlDatabase = {
   },
 };
 
-
-// Create a global object called users to store and access the users in the app
 const users = {
   userRandomID: {
     id: "userRandomID",

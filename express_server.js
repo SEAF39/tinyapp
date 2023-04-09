@@ -20,13 +20,9 @@ app.get('/get-session', function(req, res) {
   res.send('User ID is ' + user_id);
 });
 
-
 app.set("view engine", "ejs");
-
 app.use(express.urlencoded({ extended: true }));
-
 app.use(bodyParser.urlencoded({ extended: true }));
-
 
 app.get("/urls", (req, res) => {
   const user_id = req.session.user_id;
@@ -43,7 +39,6 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-
 app.post("/urls", (req, res) => {
   const user_id = req.session.user_id;
   const user = users[user_id];
@@ -54,9 +49,8 @@ app.post("/urls", (req, res) => {
   const shortURL = generateRandomString(); 
   const longURL = req.body.longURL;
   urlDatabase[shortURL] = { longURL: longURL, userID: user_id };
-  res.redirect(`/urls`);
+  res.redirect(`/urls/${shortURL}`);
 });
-
 
 app.get("/urls/new", (req, res) => {
   const user_id = req.session.user_id;
@@ -64,12 +58,11 @@ app.get("/urls/new", (req, res) => {
   if (!user) {
     return res.status(401).send("You need to be logged in to view this page");
   }
-    const templateVars = {
+  const templateVars = {
     user_id: user.email
   };
   res.render("urls_new", templateVars);
 });
-
 
 app.get("/u/:id", (req, res) => {
   if (!urlDatabase[req.params.id]) {
@@ -103,7 +96,7 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-app.post("/urls/:id/edit", (req, res) => {
+app.post("/urls/:id", (req, res) => {
   const userID = req.session.user_id;
   const urlID = req.params.id;
   const newLongURL = req.body.longURL;
@@ -142,7 +135,6 @@ app.post("/urls/:id/delete", (req, res) => {
   res.redirect("/urls");
 });
 
-
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -163,10 +155,9 @@ app.get('/login', (req, res) => {
   }
 });
 
-
 app.post("/logout", (req, res) => {
   req.session.user_id = null;
-  res.redirect("/login");
+  return res.status(200).redirect("/login");
 });
 
 app.get('/register', (req, res) => {
@@ -202,7 +193,6 @@ app.post('/register', (req, res) => {
   res.redirect('/urls');
   res.status(201).send(`User registered successfully: ${email}`);
 });
-
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
